@@ -1,0 +1,20 @@
+mkdir /srv/nfs/kubedata -p
+
+apt-get install nfs-utils
+
+sudo apt install nfs-kernel-server
+
+sudo chown nobody:nogroup /srv/nfs/kubedata
+
+sudo chmod 777 /srv/nfs/kubedata
+
+sudo systemctl enable nfs-server
+
+sudo systemctl restart nfs-server
+
+nano /etc/exports
+	add below line
+	/srv/nfs/kubedata	*(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure)
+
+exportfs -rav
+exportfs -v

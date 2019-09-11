@@ -1,0 +1,20 @@
+mkdir /mnt/gitlab
+yum update -y
+yum install -y git
+yum install -y lokkit
+yum install -y curl policycoreutils-python openssh-server cronie
+lokkit -s http -s ssh
+yum install -y postfix
+service postfix start
+service postfix status
+chkconfig postfix on
+yum install -y wget
+wget --content-disposition https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-9.4.4-ce.0.el7.x86_64.rpm/download.rpm
+rpm -i gitlab-ce-9.4.4-ce.0.el7.x86_64.rpm 
+vi /etc/gitlab/gitlab.rb
+	Add the following
+		git_data_dirs({
+			"default" => { "path" => "/mnt/gitlab/git-data" }
+		})
+gitlab-ctl reconfigure
+gitlab-ctl restart

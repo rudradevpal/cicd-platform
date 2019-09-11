@@ -1,0 +1,25 @@
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
+
+kubectl -n kube-system edit service kubernetes-dashboard
+	change
+		spec:
+			. . . 
+			. . .
+			type: NodePort
+			. . .
+			ports:
+			- nodePort: 30080
+				port: 443
+				protocol: TCP
+				targetPort: 8443
+				. . .
+			. . . 
+
+kubectl create serviceaccount cluster-admin-dashboard-sa
+
+kubectl create clusterrolebinding cluster-admin-dashboard-sa   --clusterrole=cluster-admin   --serviceaccount=default:cluster-admin-dashboard-sa
+
+kubectl get secret | grep cluster-admin-dashboard-sa
+
+kubectl describe secret cluster-admin-dashboard-sa-token-4xt78
+	collect token to login

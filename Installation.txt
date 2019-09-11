@@ -1,0 +1,114 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+CI/CD Setup
+Author: Rudradev Pal
+Tools: Virtualbox, Kubernetes, Jenkins, GitLab, Docker Registry, Docker Registry UI, Slack
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+1.  Install Kubernetes
+	 Follow k8s.tar
+	 ** If you specify static nodeport to docker registry you can do step 7** after installation of docker
+	
+2.  Confugure NFS Server
+	 Follow nfs-server.txt
+	
+3.  Deploy nfs-client-provisioner
+	 Follow nfs-client-provisioner.txt
+
+4.  Install Jenkins on Kubernetes
+	 Deploy with jenkins.yml
+
+5.  Install Gitlab on VM
+	 Follow gitlab.txt
+
+6.  Configure Slave with Jenkins
+	 Install oracle jdk 9 and add slave to jenkins
+	 Install dependencies in slave like kubectl, docker, jq, git etc.
+
+7.  Deploy Docker Registry
+	 deploy registry.yml before that change 'htpasswd'. Generate from
+	 https://www.askapache.com/online-tools/htpasswd-generator/
+	 Realm or Popup Name - blank
+	 DigestDomain - blank
+	 Encryption Algorithm - bcrypt
+	 Authentication Scheme - both
+	 
+	 **Add this registry in kubernetes worker nodes and in slave
+	 nano /etc/docker/daemon.json
+		add "insecure-registries" : ["<docker_registry_node>:<nodeport>"]
+			Example:
+				{
+					"exec-opts": ["native.cgroupdriver=systemd"],
+					"log-driver": "json-file",
+					"log-opts": {
+						"max-size": "100m"
+					},
+					"storage-driver": "overlay2",
+					"insecure-registries" : ["192.168.10.117:30172"]
+				}
+	systemctl daemon-reload
+	systemctl restart docker
+	
+	If kubernetes is down  do "docker start $(docker ps -a -q -f status=exited)" on those nodes
+
+8.  Deploy Registry UI
+	 First create secret for docker registry
+	 	kubectl create secret docker-registry registry-secret --docker-server=192.168.10.117:30172 --docker-username=''cicd' --docker-password='cicd@12345' -n kube-system
+	 deploy registry-ui.yml
+	 
+9.  Create Slack App
+	 Enable Incoming Webhooks
+	 Note down Webhook URL
+	
+10. Create Slack Jenkins CI App
+      Note down Intregretion Token
+	  
+11. Install Gitlab Hook and Slack Notification Plugin
+
+12. In GitLab create admin Access token
+
+13. Go to Jenkins > Manage Jenkins > Configure System
+	  Under Gitlab 
+		Connection name: gitlab-hook
+		Gitlab host URL: http://192.168.10.116
+		Credentials: GitLab token with admin and all permission
+	  Under Slack
+		Workspace: aivdsi
+		Credential: Slack Intregretion Token
+		Default channel / member id: #cicd
+
+14. In Gitlab Admin Area > Settings > Network > Outbound requests > Check "Allow requests to the local network from hooks and services"
+
+15. In Gitlab Admin Area > Settings > CI/CD > Continuous Integration and Deployment > Disable gitlab pipeline
+
+16. Create Gitlab Repo and concurrent Jenkins Pipeline
+
+17. In jenkins Pipeline > Configure > Build Triggers > Build when a change is pushed to GitLab. > Check
+	  Note Down webhook URL
+	  Check
+		Accepted Merge Request Events
+		Advance
+			Enable [ci-skip]
+			Ignore WIP Merge Requests		
+			Set build description to build cause (eg. Merge request or Git Push )
+			Allowed branches > Filter branches by regex
+				Source Branch Regex: .*feature.*
+				Target Branch Regex: .*release.*
+		Uncheck others
+
+18. In Pipeline put "slackSend (color: "#73B839", message: "demo pipeline successful")" to send notification
+
+19. Go to Gitlab Repo > Settings > Integrations
+	  URL: jenkins webhook URL
+	  Merge request events: Check 
+	  Uncheck others
+	  and save
+	  
+20. Go to Gitlab Repo > Settings > Integrations > Slack notifications
+	  Uncheck
+		Pipeline
+		Deployment
+		Notify only default branch
+	  Others will be checked
+	  Username: blank
+	  Webhook: slack webhook URL
+	  Save
+----------------------------------------------------------------------------------------------------------------------------------------------------------

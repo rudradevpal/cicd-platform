@@ -1,0 +1,32 @@
+--- 
+apiVersion: v1
+kind: ReplicationController
+metadata: 
+  labels: 
+    app: kube-registry-ui
+  name: kube-registry-ui
+  namespace: kube-system
+spec: 
+  replicas: 1
+  selector: 
+    app: kube-registry-ui
+  template: 
+    metadata: 
+      labels: 
+        app: kube-registry-ui
+    spec: 
+      containers: 
+        - 
+          env: 
+            - 
+              name: DELETE_IMAGES
+              value: "true"
+            - 
+              name: REGISTRY_URL
+              value: "http://192.168.10.117:30172"
+          image: "joxit/docker-registry-ui:static"
+          name: registry-ui
+          ports: 
+            - 
+              containerPort: 80
+

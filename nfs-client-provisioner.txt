@@ -1,0 +1,11 @@
+Get connection information for your NFS server.
+
+Extract and go inside nfs-client-provisioner.tar
+
+kubectl create namespace nfs
+
+kubectl create -f rbac.yaml -n nfs
+
+kubectl create -f deployment.yaml -n nfs
+
+kubectl create -f default-sc.yaml -n nfs

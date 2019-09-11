@@ -1,0 +1,93 @@
+node ('ubuntu-slave'){
+	slackSend (color: "#D1D1D1", message: "$JOB_NAME Pipeline build $BUILD_NUMBER Started")
+	try {
+		stage('Prepare Workspace'){
+			sh'''
+				rm -rf *
+				echo "null" > statusFile
+			'''
+		}
+		stage('Create Kubernetes Configs'){
+			sh'''
+				docker_registry_ip=$(echo $docker_registry_url|awk -F '/' '{print $3}')
+                
+				cicd_portal_ui_app_name=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $5}'|awk -F '.' '{print $1}'| sed -e "s/_/-/g")
+                gitlab_ip=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $3}')
+				gitlab_http=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $1}')//
+				gitlab_user=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $4}')
+				gitlab_repo_name=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $5}'|awk -F '.' '{print $1}')
+                git clone $gitlab_http$gitlab_username:$gitlab_private_token@$gitlab_ip/$gitlab_user/$gitlab_repo_name.git
+				cd $gitlab_repo_name
+                cicd_portal_ui_last_tag=$(git tag|grep '[^-aws]$'|grep '[^-oath]$'|tail -1||true)
+                cd ..
+                
+cat <<EOF > cicd_portal_ui.yml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $(echo $cicd_portal_ui_app_name)
+  namespace: cicd-portal
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $cicd_portal_ui_app_name
+  template:
+    metadata:
+      labels:
+        app: $cicd_portal_ui_app_name
+    spec:
+      containers:
+      - name: $(echo $cicd_portal_ui_app_name)-container
+        image: "$docker_registry_ip/$cicd_portal_ui_app_name:$cicd_portal_ui_last_tag"
+        ports:
+        - containerPort: 5050
+      imagePullSecrets: 
+        - name: cicd-private-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cicd-portal-ui-svc
+  namespace: cicd-portal
+spec:
+  ports:
+  - nodePort: 30050
+    port: 5050
+    targetPort: 5050
+  selector:
+    app: $cicd_portal_ui_app_name
+  type: NodePort
+EOF
+			'''
+		}
+		stage('Prepare Kubernetes'){
+			sh'''
+				kubectl delete namespace cicd-portal||true
+				kubectl create namespace cicd-portal
+				kubectl create secret docker-registry cicd-private-registry --docker-server=$docker_registry_url --docker-username=$docker_registry_username --docker-password=$docker_registry_password -n cicd-portal
+			'''
+		}
+		stage('Deploy'){
+			sh'''
+				kubectl apply -f cicd_portal_ui.yml
+			'''
+		}
+	}
+	catch (e) {
+		System.exit(1)
+		if (status.trim().equalsIgnoreCase("null")) {
+			sh '''echo "Error! Ask admin for build log." > statusFile'''
+		}
+	}
+	finally {
+		status = readFile 'statusFile'
+		if (status.trim().equalsIgnoreCase("null")) {
+			slackSend (color: "#73B839", message: "$JOB_NAME Pipeline Successful")
+		}
+		else{
+			slackSend (color: "#F6260D", message: status.trim())
+		}
+	}
+}

@@ -1,0 +1,232 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.33">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.5.12">
+      <gitLabConnection>gitlab-hook</gitLabConnection>
+    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>gitlab_repository</name>
+          <description></description>
+          <defaultValue>http://192.168.10.116/cicd/cicd_workflow.git</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>gitlab_username</name>
+          <description></description>
+          <defaultValue>cicd</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>gitlab_private_token</name>
+          <description></description>
+          <defaultValue>4YYNak6i3zQqEawTcwnN</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>docker_registry_url</name>
+          <description></description>
+          <defaultValue>http://192.168.10.117:30172</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>docker_registry_username</name>
+          <description></description>
+          <defaultValue>cicd</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>docker_registry_password</name>
+          <description></description>
+          <defaultValue>cicd@12345</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.dabsquared.gitlabjenkins.GitLabPushTrigger plugin="gitlab-plugin@1.5.12">
+          <spec></spec>
+          <triggerOnPush>false</triggerOnPush>
+          <triggerOnMergeRequest>true</triggerOnMergeRequest>
+          <triggerOnPipelineEvent>false</triggerOnPipelineEvent>
+          <triggerOnAcceptedMergeRequest>false</triggerOnAcceptedMergeRequest>
+          <triggerOnClosedMergeRequest>false</triggerOnClosedMergeRequest>
+          <triggerOnApprovedMergeRequest>false</triggerOnApprovedMergeRequest>
+          <triggerOpenMergeRequestOnPush>never</triggerOpenMergeRequestOnPush>
+          <triggerOnNoteRequest>true</triggerOnNoteRequest>
+          <noteRegex>Jenkins please retry a build</noteRegex>
+          <ciSkip>true</ciSkip>
+          <skipWorkInProgressMergeRequest>true</skipWorkInProgressMergeRequest>
+          <setBuildDescription>true</setBuildDescription>
+          <branchFilterType>RegexBasedFilter</branchFilterType>
+          <includeBranchesSpec></includeBranchesSpec>
+          <excludeBranchesSpec></excludeBranchesSpec>
+          <sourceBranchRegex>.*release.*</sourceBranchRegex>
+          <targetBranchRegex>.*master.*</targetBranchRegex>
+          <secretToken>{AQAAABAAAAAQ1Y5VQhfTySaiUjhcWBrM6MgBpEzFSoizqP3PsiCKNDs=}</secretToken>
+          <pendingBuildName></pendingBuildName>
+          <cancelPendingBuildsOnUpdate>false</cancelPendingBuildsOnUpdate>
+        </com.dabsquared.gitlabjenkins.GitLabPushTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.73">
+    <script>node (&apos;ubuntu-slave&apos;){
+	slackSend (color: &quot;#D1D1D1&quot;, message: &quot;$JOB_NAME Pipeline build $BUILD_NUMBER Started&quot;)
+	try {
+		stage(&apos;Prepare Environment&apos;){
+			sh&apos;&apos;&apos;
+				rm -rf *
+				echo &quot;null&quot; &gt; statusFile
+			&apos;&apos;&apos;
+		}
+		stage(&apos;Marge&apos;){
+			sh &apos;&apos;&apos;
+				gitlab_url=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $1}&apos;)//$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $3}&apos;)
+				project_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;)
+				project_id=&quot;&quot;
+			
+				response=$(curl -s -k --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects&quot;)
+				for row in $(echo &quot;${response}&quot; | jq -r &apos;.[] | @base64&apos;); do
+					_jq() {
+					 echo ${row} | base64 --decode | jq -r ${1}
+					}
+					if [ &quot;$(echo $(_jq &apos;.name&apos;))&quot; = &quot;$project_name&quot; ]; then
+						   project_id=$(_jq &apos;.id&apos;)
+					fi
+				done
+			
+				response=$(curl -s -k --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&amp;state=opened&amp;target_branch=master&quot;)
+				iid=$(echo $response |jq &apos;.[0].iid&apos;)
+				# project_id=$(echo $response |jq &apos;.[0].project_id&apos;)
+				source_branch=$(echo $response |jq &apos;.[0].source_branch&apos;| sed -e &apos;s/&quot;//g&apos;)
+			
+				if [ &quot;$iid&quot; = &quot;null&quot; ] || [ &quot;$project_id&quot; = &quot;null&quot; ]
+				then
+					echo &quot;No Marge Request to marge&quot; &gt; statusFile
+					exit 1
+				fi
+
+				status_code=$(curl -s -k -o /dev/null -w &quot;%{http_code}\n&quot; --request PUT --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests/$iid/merge&quot;)
+				if [ &quot;$status_code&quot; != &quot;200&quot; ]
+				then
+					echo &quot;Can not marge to master. Contact cicd Admin&quot; &gt; statusFile
+					exit 1
+				fi
+
+				# last_tag=$(curl -s --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; --request GET $gitlab_url/api/v4/projects/$project_id/repository/tags|jq &apos;.[0].name&apos;| sed -e &apos;s/&quot;//g&apos;)
+				last_tag=&quot;xyz&quot;
+				new_tag=$(echo $source_branch| awk -F&apos;/&apos; &apos;{print $2}&apos;)
+				if [ &quot;$last_tag&quot; != &quot;null&quot; ]
+				then
+					marge_no=$(curl -s -k --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&amp;state=merged&amp;target_branch=master&amp;source_branch=$source_branch&quot;|jq &apos;. | length&apos;)
+					new_tag=$(echo $new_tag| awk -F&apos;.&apos; &apos;{print $1&quot;.&quot;$2}&apos;)&quot;.&quot;$(echo $(($marge_no-1)))
+				fi
+				
+				status_code=$(curl -s  -o /dev/null -w &quot;%{http_code}\n&quot; --header &quot;Content-Type: application/json&quot; --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; --request POST --data &apos;{&quot;tag_name&quot;:&quot;&apos;$new_tag&apos;&quot;,&quot;ref&quot;:&quot;master&quot;}&apos; $gitlab_url/api/v4/projects/$project_id/repository/tags)
+				if [ &quot;$status_code&quot; != &quot;201&quot; ]
+				then
+					echo &quot;Can not tag version to master. Contact cicd Admin&quot; &gt; statusFile
+					exit 1
+				fi
+				echo $new_tag &gt; new_tag
+			&apos;&apos;&apos;
+		}
+		stage(&apos;Clone&apos;){
+			sh &apos;&apos;&apos;
+				new_tag=$(cat new_tag)
+				
+				gitlab_ip=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $3}&apos;)
+				gitlab_http=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $1}&apos;)//
+				gitlab_user=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $4}&apos;)
+				gitlab_repo_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;)
+				
+				git clone $gitlab_http$gitlab_username:$gitlab_private_token@$gitlab_ip/$gitlab_user/$gitlab_repo_name.git
+				cd $gitlab_repo_name
+				git checkout tags/$new_tag
+			&apos;&apos;&apos;
+		}
+		stage(&apos;Build&apos;){
+			sh &apos;&apos;&apos;
+				new_tag=$(cat new_tag)
+				gitlab_repo_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;)
+				docker_registry_ip=$(echo $docker_registry_url|awk -F &apos;/&apos; &apos;{print $3}&apos;)
+				
+				cd $gitlab_repo_name
+				gitlab_repo_name=$(echo $gitlab_repo_name| sed -e &quot;s/_/-/g&quot;)
+				
+				args=&quot;&quot;
+
+				sed -i &apos;s/[[:space:]]*$//&apos; docker_build_args || true
+
+				if [ -f docker_build_args ]
+				then
+					if [ -s docker_build_args ]
+					then
+						for i in $(cat &lt; &quot;docker_build_args&quot;); do
+							args=$args&quot; --build-arg $i&quot;
+						done
+					else
+						echo &quot;docker_build_args is empty!&quot;
+					fi
+				else
+					echo &quot;docker_build_args not exists!&quot;
+				fi
+				
+				docker build --no-cache $args -t $docker_registry_ip/$gitlab_repo_name:$new_tag .
+				docker build -t $docker_registry_ip/init-cicd-workflow:$new_tag -f dockerfile-initContainer .
+			&apos;&apos;&apos;
+		}
+		stage(&apos;Push&apos;){
+			sh &apos;&apos;&apos;
+				new_tag=$(cat new_tag)
+				gitlab_repo_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;| sed -e &quot;s/_/-/g&quot;)
+				docker_registry_ip=$(echo $docker_registry_url|awk -F &apos;/&apos; &apos;{print $3}&apos;)
+				
+				docker login $docker_registry_url --username=$docker_registry_username --password=$docker_registry_password
+				docker push $docker_registry_ip/$gitlab_repo_name:$new_tag
+				docker push $docker_registry_ip/init-cicd-workflow:$new_tag
+			&apos;&apos;&apos;
+        }
+		stage(&apos;Cleanup&apos;){
+			sh &apos;&apos;&apos;
+				new_tag=$(cat new_tag)
+				gitlab_repo_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;)
+				docker_registry_ip=$(echo $docker_registry_url|awk -F &apos;/&apos; &apos;{print $3}&apos;)
+				
+				rm -rf $gitlab_repo_name
+				
+				gitlab_repo_name=$(echo $gitlab_repo_name| sed -e &quot;s/_/-/g&quot;)
+				
+				rm -rf new_tag
+				docker rmi $docker_registry_ip/$gitlab_repo_name:$new_tag
+				docker rmi $docker_registry_ip/init-cicd-workflow:$new_tag
+			&apos;&apos;&apos;
+        }
+	}
+	catch (e) {
+		System.exit(1)
+		if (status.trim().equalsIgnoreCase(&quot;null&quot;)) {
+			sh &apos;&apos;&apos;echo &quot;Error! Ask admin for build log.&quot; &gt; statusFile&apos;&apos;&apos;
+		}
+	}
+	finally {
+		status = readFile &apos;statusFile&apos;
+		if (status.trim().equalsIgnoreCase(&quot;null&quot;)) {
+			slackSend (color: &quot;#73B839&quot;, message: &quot;$JOB_NAME Pipeline Successful&quot;)
+		}
+		else{
+			slackSend (color: &quot;#F6260D&quot;, message: status.trim())
+		}
+	}
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
