@@ -4,7 +4,7 @@ Author: Rudradev Pal
 Tools: Virtualbox, Kubernetes, Jenkins, GitLab, Docker Registry, Docker Registry UI, Slack
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 1.  Install Kubernetes
-	 Follow k8s.tar
+	 Follow k8s Dir
 	 ** If you specify static nodeport to docker registry you can do step 7** after installation of docker
 	
 2.  Confugure NFS Server
