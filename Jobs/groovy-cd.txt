@@ -18,7 +18,8 @@ node ('ubuntu-slave'){
 				gitlab_repo_name=$(echo $cicd_portal_ui_git_repo|awk -F '/' '{print $5}'|awk -F '.' '{print $1}')
                 git clone $gitlab_http$gitlab_username:$gitlab_private_token@$gitlab_ip/$gitlab_user/$gitlab_repo_name.git
 				cd $gitlab_repo_name
-                cicd_portal_ui_last_tag=$(git tag|grep '[^-aws]$'|grep '[^-oath]$'|tail -1||true)
+                cicd_portal_ui_last_tag=$(git describe --tags||true)
+				# cicd_portal_ui_last_tag=$(git tag --sort=committerdate|grep '[^-aws]$'|grep '[^-oath]$'|tail -1||true)		# IN CASE OF multi-master
                 cd ..
                 
 cat <<EOF > cicd_portal_ui.yml
