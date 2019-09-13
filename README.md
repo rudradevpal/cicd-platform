@@ -12,7 +12,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 - Slack
 
 ## Flow Diagram
-
+![flow](docs/cicd-flow.jpg)
 
 ## Installation Steps
 1.  Install Kubernetes
