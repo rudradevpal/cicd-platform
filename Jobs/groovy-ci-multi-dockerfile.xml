@@ -85,7 +85,7 @@
 				echo &quot;null&quot; &gt; statusFile
 			&apos;&apos;&apos;
 		}
-		stage(&apos;Marge&apos;){
+		stage(&apos;Merge&apos;){
 			sh &apos;&apos;&apos;
 				gitlab_url=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $1}&apos;)//$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $3}&apos;)
 				project_name=$(echo $gitlab_repository|awk -F &apos;/&apos; &apos;{print $5}&apos;|awk -F &apos;.&apos; &apos;{print $1}&apos;)
@@ -108,14 +108,14 @@
 			
 				if [ &quot;$iid&quot; = &quot;null&quot; ] || [ &quot;$project_id&quot; = &quot;null&quot; ]
 				then
-					echo &quot;No Marge Request to marge&quot; &gt; statusFile
+					echo &quot;No Merge Request to merge&quot; &gt; statusFile
 					exit 1
 				fi
 
 				status_code=$(curl -s -k -o /dev/null -w &quot;%{http_code}\n&quot; --request PUT --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests/$iid/merge&quot;)
 				if [ &quot;$status_code&quot; != &quot;200&quot; ]
 				then
-					echo &quot;Can not marge to master. Contact cicd Admin&quot; &gt; statusFile
+					echo &quot;Can not merge to master. Contact cicd Admin&quot; &gt; statusFile
 					exit 1
 				fi
 
@@ -124,8 +124,8 @@
 				new_tag=$(echo $source_branch| awk -F&apos;/&apos; &apos;{print $2}&apos;)
 				if [ &quot;$last_tag&quot; != &quot;null&quot; ]
 				then
-					marge_no=$(curl -s -k --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&amp;state=merged&amp;target_branch=master&amp;source_branch=$source_branch&quot;|jq &apos;. | length&apos;)
-					new_tag=$(echo $new_tag| awk -F&apos;.&apos; &apos;{print $1&quot;.&quot;$2}&apos;)&quot;.&quot;$(echo $(($marge_no-1)))
+					merge_no=$(curl -s -k --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; &quot;$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&amp;state=merged&amp;target_branch=master&amp;source_branch=$source_branch&quot;|jq &apos;. | length&apos;)
+					new_tag=$(echo $new_tag| awk -F&apos;.&apos; &apos;{print $1&quot;.&quot;$2}&apos;)&quot;.&quot;$(echo $(($merge_no-1)))
 				fi
 				
 				status_code=$(curl -s  -o /dev/null -w &quot;%{http_code}\n&quot; --header &quot;Content-Type: application/json&quot; --header &quot;PRIVATE-TOKEN: $gitlab_private_token&quot; --request POST --data &apos;{&quot;tag_name&quot;:&quot;&apos;$new_tag&apos;&quot;,&quot;ref&quot;:&quot;master&quot;}&apos; $gitlab_url/api/v4/projects/$project_id/repository/tags)

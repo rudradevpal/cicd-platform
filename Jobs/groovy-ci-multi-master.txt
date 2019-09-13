@@ -7,7 +7,7 @@ node ('ubuntu-slave'){
 				echo "null" > statusFile
 			'''
 		}
-		stage('Marge'){
+		stage('Merge'){
 			sh '''
 				gitlab_url=$(echo $gitlab_repository|awk -F '/' '{print $1}')//$(echo $gitlab_repository|awk -F '/' '{print $3}')
 				
@@ -56,14 +56,14 @@ node ('ubuntu-slave'){
 			
 				if [ "$iid" = "null" ] || [ "$project_id" = "null" ]
 				then
-					echo "No Marge Request to marge" > statusFile
+					echo "No Merge Request to merge" > statusFile
 					exit 1
 				fi
 
 				status_code=$(curl -s -k -o /dev/null -w "%{http_code}\n" --request PUT --header "PRIVATE-TOKEN: $gitlab_private_token" "$gitlab_url/api/v4/projects/$project_id/merge_requests/$iid/merge")
 				if [ "$status_code" != "200" ]
 				then
-					echo "Can not marge to master. Contact cicd Admin" > statusFile
+					echo "Can not merge to master. Contact cicd Admin" > statusFile
 					exit 1
 				fi
 
@@ -73,8 +73,8 @@ node ('ubuntu-slave'){
 				
 				if [ "$last_tag" != "null" ]
 				then
-					marge_no=$(curl -s -k --header "PRIVATE-TOKEN: $gitlab_private_token" "$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&state=merged&target_branch=$target_branch&source_branch=$source_branch"|jq '. | length')
-					new_tag=$(echo $new_tag| awk -F'.' '{print $1"."$2}')"."$(echo $(($marge_no-1)))
+					merge_no=$(curl -s -k --header "PRIVATE-TOKEN: $gitlab_private_token" "$gitlab_url/api/v4/projects/$project_id/merge_requests?scope=all&state=merged&target_branch=$target_branch&source_branch=$source_branch"|jq '. | length')
+					new_tag=$(echo $new_tag| awk -F'.' '{print $1"."$2}')"."$(echo $(($merge_no-1)))
 				fi
 				new_tag=$new_tag$(cat appType)
 				
