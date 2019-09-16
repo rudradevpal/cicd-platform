@@ -3,36 +3,5 @@ get ~/.docker/config.json
 kubectl create configmap docker-config --from-file=$HOME/.docker/config.json
 
 nano pod-kaniko.yml
-	apiVersion: v1
-	kind: Pod
-	metadata:
-	name: builder
-	spec:
-	containers:
-	- name: builder
-		image: gcr.io/kaniko-project/executor:latest
-		args: ["--dockerfile=./Dockerfile",
-				"--context=<path_of_git_dir_inside_pod>",
-				"--destination=<docker_registry/app_name:tag>",
-				"--force" ]
-		volumeMounts:
-		- name: docker-config
-			mountPath: /root/.docker/
-		- name: source-code
-			mountPath: <path_of_git_dir_inside_pod>
-	restartPolicy: Never
-	initContainers:
-		- image: python
-		name: init-builder
-		command: ["/bin/sh"]
-		args: ["-c", "git clone <git_repo> <path_of_git_dir_inside_pod>"] 
-		volumeMounts:
-		- name: source-code
-			mountPath: <path_of_git_dir_inside_pod>
-	restartPolicy: Never
-	volumes:
-		- name: docker-config
-		configMap:
-			name: docker-config
-		- name: source-code
-		emptyDir: {}
+	refer kaniko.yml
+
