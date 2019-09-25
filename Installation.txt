@@ -12,6 +12,8 @@ Tools: Virtualbox, Kubernetes, Jenkins, GitLab, Docker Registry, Docker Registry
 	
 3.  Deploy nfs-client-provisioner
 	 Follow nfs-client-provisioner.txt
+	 
+AddDashboard
 
 4.  Install Jenkins on Kubernetes
 	 Deploy with jenkins.yml

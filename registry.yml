@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: auth
-  namespace: kube-system
+  namespace: registry
 data:
   htpasswd: |
     cicd:$2y$10$LXdO4A.Do1.38f4MkeexVuoHK9xgciMcxog0w/2fLnk1u0z/tahV2
@@ -12,7 +12,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: registry-vol
-  namespace: kube-system
+  namespace: registry
 spec:
   accessModes:
     - ReadWriteMany
@@ -26,7 +26,7 @@ metadata:
   labels:
     app: registry
   name: registry
-  namespace: kube-system
+  namespace: registry
 spec:
   replicas: 1
   strategy:
@@ -67,11 +67,12 @@ metadata:
   labels:
     app: registry
   name: registry
-  namespace: kube-system
+  namespace: registry
 spec:
   type: NodePort
   ports:
     - port: 443
       targetPort: 5000
+      nodePort: 30172
   selector:
     app: registry
