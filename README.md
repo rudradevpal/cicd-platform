@@ -114,7 +114,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		```shell
 		kubectl get secret -n kube-system| grep cluster-admin-dashboard-sa
 		```
-	Output:
+		Output:
 		```shell
 		cluster-admin-dashboard-sa-token-htwv8           kubernetes.io/service-account-token   3      2m4s
 		```
@@ -123,7 +123,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		kubectl get secret | grep cluster-admin-dashboard-sa -n kube-system
 		```
 	6. Copy and Keep the token part
-	Output:
+		Output:
 		```shell
 		Name:         cluster-admin-dashboard-sa-token-htwv8
 		Namespace:    kube-system
