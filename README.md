@@ -141,19 +141,17 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		```
 5. Deploy Docker Registry
 	Come to root Directory
-	1. Create ```htpasswd``` with Username and Password.
-	You can use [Online Tool](https://www.askapache.com/online-tools/htpasswd-generator/)
-    * Username for logging in: <your_username>
-	*	Password for the: <your_password>
-	*	Realm or Popup Name: blank
-	*    DigestDomain: blank
-	*	Encryption Algorithm: bcrypt
-	*	Authentication Scheme: both
-	
-	* **Generate**
+	1. Create ```htpasswd``` with Username and Password.You can use [Online Tool](https://www.askapache.com/online-tools/htpasswd-generator/)
+		* Username for logging in: <your_username>
+		*	Password for the: <your_password>
+		*	Realm or Popup Name: blank
+		*    DigestDomain: blank
+		*	Encryption Algorithm: bcrypt
+		*	Authentication Scheme: both
 		
-	*Your htapasswd will be under ```bcrypt Algorithm``` section.
-		Copy that and keep Safe.*
+		* **Generate**
+		
+		*Your htapasswd will be under ```bcrypt Algorithm``` section. Copy that and keep Safe.*
 	2. Modify registry.yml and change value of ```htpasswd: |``` with the htapasswd you have generated.
 	3. Create namespace for docker registry
 		```shell
@@ -165,7 +163,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		```
 	5. **Add this registry in kubernetes worker nodes and in slave**
 	6. Modify ```/etc/docker/daemon.json``` and add ```"insecure-registries" : ["<docker_registry_node>:<nodeport>"]```
-	Example:
+		Example:
 		```shell
 		{
 			"exec-opts": ["native.cgroupdriver=systemd"],
