@@ -16,9 +16,9 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 
 ## Installation Steps
 1. Setup NFS Server on your Host or Other VM/Server
-	1. Create Directory to store NFS datamkdir
+	1. Create Directory to store NFS data
     ```shell
-	mkdir /srv/nfs/kubedata -p
+		mkdir /srv/nfs/kubedata -p
 	```
 	2. Install NFS Client tool
 	```shell
