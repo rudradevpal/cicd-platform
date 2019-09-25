@@ -55,7 +55,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 	exportfs -v
 	```
 	
-2.  Install Kubernetes
+2. Install Kubernetes
 	 Go to k8s Directory
 	 a. Install DDocker and Enable Docker
     ```shell
@@ -75,7 +75,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 	 kubectl create -f calico.yaml
 	 ```
 	
-3.  Deploy NFS Client Provisioner on Kubernetes
+3. Deploy NFS Client Provisioner on Kubernetes
 	Go to nfs-client-provisioner Directory
 	a. Get connection information for your NFS server.
 	b. Change NFS_SERVER value to <YOUR_NFS_SERVER_IP> in deployment.yaml
@@ -97,7 +97,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
     kubectl create -f default-sc.yaml
     ```
 
-4.	Deploy Kubernetes Dashboard
+4. Deploy Kubernetes Dashboard
 	a. Deploy oficial Dashboard
 	```shell
 	kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
@@ -139,7 +139,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		namespace:  11 bytes
 		token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJjbHVzdGVyLWFkbWluLWRhc2hib2FyZC1zYS10b2tlbi1odHd2OCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJjbHVzdGVyLWFkbWluLWRhc2hib2FyZC1zYSIsImt16InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTpjbHVzdGVyLWFkbWluLWRhc2hib2FyZC1zYSJ9.D-KEAhZBR8iFwYy5BZBwzzC5Mg6fKvK92rjF1BqZeeMeSxZusPZaSlZQ2hRmbXEPBzBxFToe48yhAcxaW8U_Y2W05BPcBDGkaB053g2dwyLCHZm3rDUXDX9iphWMoMgxszDj1Xc056NVupDwsypK67M_gfaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImU1NDJiMjI5LWYxY2EtNDg2MS1iOTFlLTg4Y2EyODk5YThhMSIsInN1YiIEL41Qsceb14BvsjCCafbluoeTpPg-lhlNgETBinh9_2tOCUytYKURvfdWbt-ZzawmFOjHKERUn4vzeRSMJhTgYqcpNAh1Zh_QfIOw00i80HMpvnFfvYU5HhPGD5kWuSfuay1p4m-EkOxDvgawqSLWLILstY1cx3LHhCY2_juI3bTwd56uxM2B51ngVg
 	```
-5.	Deploy Docker Registry
+5. Deploy Docker Registry
 	Come to root Directory
 	a. Create ```htpasswd``` with Username and Password.
 	You can use [Online Tool](https://www.askapache.com/online-tools/htpasswd-generator/)
