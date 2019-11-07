@@ -184,7 +184,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 
 6.  Configure Slave with Jenkins
 	 Install oracle jdk 9 and add slave to jenkins
-	 Install dependencies in slave like kubectl, docker, jq, git etc.
+	 Install dependencies in slave like kubectl, docker, jq, git, node, npm, sshpass etc.
 
 7.  Deploy Docker Registry
 	 deploy registry.yml before that change 'htpasswd'. Generate from
@@ -234,7 +234,7 @@ This Document guides to setup a CI/CD Platform on top of Cloud or Bare-metal Ser
 		Gitlab host URL: http://192.168.10.116
 		Credentials: GitLab token with admin and all permission
 	  Under Slack
-		Workspace: aivdsi
+		Workspace: abc
 		Credential: Slack Intregretion Token
 		Default channel / member id: #cicd
 
